@@ -38,3 +38,7 @@
   make the number of PGs per OSD exceed the configured
   ``mon_max_pg_per_osd`` limit.  The option can be adjusted if it
   is really necessary to create a pool with more PGs.
+
+* When using ceph systemd services with RDMA, a script is run that adds/removes
+  configurations to the systemd service file. Therefore,the rdma option in the
+  ceph.conf should not be edited before stopping the service.
