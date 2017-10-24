@@ -2,6 +2,12 @@
 
 ## Useful commands
 
+- Compilation
+
+```
+./my_cmake.sh -DWITH_UCX=/scrap/ucx-install -DCMAKE_INSTALL_PREFIX=/scrap/ceph-install -DCMAKE_CXX_FLAGS="-g -O0" -DCMAKE_C_FLAGS="-g -O0"
+```
+
 - How to run using UCX
 
 ``` bash
