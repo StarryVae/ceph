@@ -772,7 +772,7 @@ std::vector<Option> get_global_options() {
     .set_description(""),
 
     Option("ms_async_rdma_polling_us", Option::TYPE_UINT, Option::LEVEL_ADVANCED)
-    .set_default(1000)
+    .set_default(0)
     .set_description(""),
 
     Option("ms_async_rdma_local_gid", Option::TYPE_STR, Option::LEVEL_ADVANCED)
