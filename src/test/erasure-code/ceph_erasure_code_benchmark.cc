@@ -61,6 +61,8 @@ int ErasureCodeBench::setup(int argc, char** argv) {
      " the first chunk, then the second etc.)")
     ("parameter,P", po::value<vector<string> >(),
      "add a parameter to the erasure code profile")
+    ("duration,r", po::value<int>()->default_value(0),
+     "duration in seconds")
     ;
 
   po::variables_map vm;
@@ -123,6 +125,7 @@ int ErasureCodeBench::setup(int argc, char** argv) {
 
   k = atoi(profile["k"].c_str());
   m = atoi(profile["m"].c_str());
+  duration = vm["duration"].as<int>();
   
   if (k <= 0) {
     cout << "parameter k is " << k << ". But k needs to be > 0." << endl;
@@ -155,6 +158,8 @@ int ErasureCodeBench::encode()
   int code = instance.factory(plugin,
 			      g_conf->get_val<std::string>("erasure_code_dir"),
 			      profile, &erasure_code, &messages);
+  int i;
+
   if (code) {
     cerr << messages.str() << endl;
     return code;
@@ -173,18 +178,31 @@ int ErasureCodeBench::encode()
   in.append(string(in_size, 'X'));
   in.rebuild_aligned(ErasureCode::SIMD_ALIGN);
   set<int> want_to_encode;
-  for (int i = 0; i < k + m; i++) {
+  for (i = 0; i < k + m; i++) {
     want_to_encode.insert(i);
   }
-  utime_t begin_time = ceph_clock_now();
-  for (int i = 0; i < max_iterations; i++) {
+
+
+//  for (i = 0; i < max_iterations || (duration && d < duration) ; i++) {
+    uint64_t begin_time = ceph_clock_now().sec();
+    uint64_t end_time = ceph_clock_now().sec();
+    i = 0;
+    while (end_time < begin_time+duration) {
+    i++;
     map<int,bufferlist> encoded;
     code = erasure_code->encode(want_to_encode, in, &encoded);
+    end_time = ceph_clock_now().sec();
+//    cout << duration << "\t" << (end_time - begin_time) << "\t" << (i * (in_size / 1024)) << endl;
     if (code)
       return code;
   }
-  utime_t end_time = ceph_clock_now();
-  cout << (end_time - begin_time) << "\t" << (max_iterations * (in_size / 1024)) << endl;
+//  end_time = ceph_clock_now();
+//  cout << (end_time - begin_time) << "\t" << (max_iterations * (in_size / 1024)) << endl;
+  unsigned long mb = ((i+1) * ((float)in_size / 1024 / 1024)) ;
+  float d =(end_time - begin_time);
+  float bw = (float) mb / d;
+
+  printf("%lf m_bw\n", bw );
   return 0;
 }
 
