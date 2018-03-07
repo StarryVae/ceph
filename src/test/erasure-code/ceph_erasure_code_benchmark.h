@@ -29,6 +29,7 @@ class ErasureCodeBench {
   int k;
   int m;
   int duration;
+  int input_bw;
 
   string plugin;
 

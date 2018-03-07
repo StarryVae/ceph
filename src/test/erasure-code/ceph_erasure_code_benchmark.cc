@@ -44,6 +44,8 @@ int ErasureCodeBench::setup(int argc, char** argv) {
     ("verbose,v", "explain what happens")
     ("size,s", po::value<int>()->default_value(1024 * 1024),
      "size of the buffer to be encoded")
+    ("input_bw,b", po::value<int>()->default_value(100 * 1024 /8),
+     "size of the buffer to be encoded")
     ("iterations,i", po::value<int>()->default_value(1),
      "number of encode/decode runs")
     ("plugin,p", po::value<string>()->default_value("jerasure"),
@@ -126,6 +128,7 @@ int ErasureCodeBench::setup(int argc, char** argv) {
   k = atoi(profile["k"].c_str());
   m = atoi(profile["m"].c_str());
   duration = vm["duration"].as<int>();
+  input_bw = vm["input_bw"].as<int>();
   
   if (k <= 0) {
     cout << "parameter k is " << k << ". But k needs to be > 0." << endl;
@@ -149,6 +152,16 @@ int ErasureCodeBench::run() {
   else
     return decode();
 }
+
+static float current_bw_mb_per_sec(uint64_t bytes, uint64_t begin_time)
+{
+  uint64_t end_time = ceph_clock_now().sec();
+  unsigned long mb = (((float)bytes / 1024 / 1024)) ;
+  float d =(end_time - begin_time);
+  float bw = (float) mb / d;
+
+  return bw;
+} 
 
 int ErasureCodeBench::encode()
 {
@@ -175,6 +188,7 @@ int ErasureCodeBench::encode()
   }
 
   bufferlist in;
+  size_t total_size=0;
   in.append(string(in_size, 'X'));
   in.rebuild_aligned(ErasureCode::SIMD_ALIGN);
   set<int> want_to_encode;
@@ -188,20 +202,23 @@ int ErasureCodeBench::encode()
     uint64_t end_time = ceph_clock_now().sec();
     i = 0;
     while (end_time < begin_time+duration) {
-    i++;
     map<int,bufferlist> encoded;
+    total_size+=in_size;
+    i++;
+
+
     code = erasure_code->encode(want_to_encode, in, &encoded);
     end_time = ceph_clock_now().sec();
 //    cout << duration << "\t" << (end_time - begin_time) << "\t" << (i * (in_size / 1024)) << endl;
     if (code)
       return code;
+    while(input_bw < current_bw_mb_per_sec(total_size, begin_time))
+       usleep(1000);
   }
 //  end_time = ceph_clock_now();
 //  cout << (end_time - begin_time) << "\t" << (max_iterations * (in_size / 1024)) << endl;
-  unsigned long mb = ((i+1) * ((float)in_size / 1024 / 1024)) ;
-  float d =(end_time - begin_time);
-  float bw = (float) mb / d;
 
+  float bw = current_bw_mb_per_sec((i +1) * in_size ,begin_time);
   printf("%lf m_bw\n", bw );
   return 0;
 }
