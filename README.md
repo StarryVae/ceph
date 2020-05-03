@@ -203,5 +203,12 @@ To build the documentation, ensure that you are in the top-level
 	
 ## Ceph Network
 
+最近在看Ceph底层网络实现，查阅了网上的一些资料，感觉自己学习的很零散，没有系统性的教程和书籍感觉很难迅速的深入。
+
+首先看了Ceph的架构，想先了解一下Ceph的通信主要包括哪些模块之间的通信或者说机器之间需要传输什么，目前了解的大概是OSD之间需要进行数据信息的传输、client和主OSD之间有数据信息和控制信息的传输、monitor和OSD之间也有控制信息（cluster map的更新？）的传输。
+
+接着看了Ceph的网络架构，感觉源码体现不出架构，而大量的文献又专注于源码解析，没有上层的抽象，即使有也很简单，所以看起来很麻烦。下面这个链接还能稍微看懂一些：
 https://sketch2sky.com/2017/12/13/ceph-asyncmessenger-%E7%AE%80%E6%9E%90-iii/
+
+最后是Ceph网络中RDMA的实现，这个感觉如果光看RDMA的实现倒还好，但是在看的过程中还是会去思考为什么需要各种各样的类？比如RDMAworker，RDMAServerSocketImpl，这些类其实是为了迎合Ceph的网络架构才需要的，那就不得不回到第二步仔细学习才行。
 
